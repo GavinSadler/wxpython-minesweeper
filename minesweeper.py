@@ -1,13 +1,14 @@
 
 import wx
-import random
-
+from minefield import MineField
 
 class App(wx.App):
+
     def __init__(self):
+        
         super().__init__()
 
-        frame = wx.Frame(None, title="My List App", pos=(30, 30), size=(800, 600))
+        frame = wx.Frame(None, title="Minesweeper", pos=(30, 30), size=(800, 600))
         panel = wx.Panel(frame)
 
         # Grid sizer which will automatically size all of the buttons in the frame
@@ -17,17 +18,15 @@ class App(wx.App):
         self.buttons = []
 
         # The font instance which will be used for the button labels
-        buttonFont = wx.Font(24, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        buttonFont = wx.Font(24, wx.FONTFAMILY_DEFAULT,
+                             wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 
-        # Empty 2d array to store the mines in the game
-        # We start off empty since we want to initialize our mine field after the user clicks one time, otherwise their first click may be a mine and the player will lose without a chance to play :(
-        self.mineField = []
+        self.mineField = MineField(10, 10)
         self.firstClick = True
 
         for x in range(0, 10):
             # This will add a new column to the lists buttons, minefield, and gamefield
             self.buttons.append([])
-            self.mineField.append([])
 
             for y in range(0, 10):
                 # This will add a new button to the same list
@@ -40,40 +39,29 @@ class App(wx.App):
                 self.buttons[x][y].Bind(wx.EVT_BUTTON, self.onButtonClicked)
                 self.buttons[x][y].SetFont(buttonFont)
 
-                # This will initialize our minefield and gamefield to be empty at first
-                self.mineField[x].append(0)
-
         panel.SetSizer(self.grid)
 
         frame.Show()
 
     def onButtonClicked(self, event):
+
         x = int((event.GetId() - 10000) % 10)
         y = int((event.GetId() - 10000) / 10)
 
+        # We need to randomly spread bombs across the minefield when the user first clicks
         if self.firstClick:
-            mines = 30
 
-            while mines:
-                rx = random.randint(0, 9)
-                ry = random.randint(0, 9)
-
-                if self.mineField[rx][ry] == 0 and rx != x and ry != y:
-
-                    # A value of -1 indicated a mine at this location
-                    self.mineField[rx][ry] = -1
-
-                    mines = mines - 1
+            self.mineField.generateMines(x, y, 30)
 
             # Now that the mines have been placed, we need to make sure they are not generated again
             self.firstClick = False
 
-        if self.mineField[x][y] == -1:
+        # When the user clicks on a mine . . .
+        if self.mineField.get(x, y) == -1:
 
-            for a in range(0, 10):
-                for b in range(0, 10):
-                    if self.mineField[a][b] == -1:
-                        self.buttons[a][b].SetLabel("💣")
+            # Grab each position from the mines returned by getMines and set the button labels to be bomb emojis
+            for mine in self.mineField.getMines():
+                self.buttons[mine[0]][mine[1]].SetLabel("💣")
 
             wx.MessageBox("Kaboom! You stepped on a mine! Game over!")
 
@@ -81,27 +69,16 @@ class App(wx.App):
             self.firstClick = True
 
             # Reset the mine field
-            for a in range(0, 10):
-                for b in range(0, 10):
-                    self.mineField[a][b] = 0
-                    self.buttons[a][b].SetLabel("")
-                    self.buttons[a][b].Enable(True)
+            self.mineField.reset()
 
         else:
-            mineCount = 0
+            
+            number = self.mineField.get(x, y)
 
-            for a in range(-1, 2):
-                for b in range(-1, 2):
-                    if x + a >= 0 and  x + a < 10 and y + b >= 0 and y + b < 10:
-                        if self.mineField[x + a][y + b] == -1:
-                            mineCount = mineCount + 1
-
-            self.buttons[x][y].SetLabel(str(mineCount) if mineCount > 0 else "")
+            self.buttons[x][y].SetLabel(str(number) if number > 0 else "")
             self.buttons[x][y].Enable(False)
-        
+
         event.Skip()
-
-
 
 
 if __name__ == "__main__":
