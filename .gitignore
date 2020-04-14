@@ -6,4 +6,5 @@ env
 envs
 .envs
 
-.pyc
+*.pyc
+__pycache__
