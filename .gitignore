@@ -8,3 +8,7 @@ envs
 
 *.pyc
 __pycache__
+
+*.spec
+build/
+dist/
