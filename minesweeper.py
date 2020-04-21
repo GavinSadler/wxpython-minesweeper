@@ -97,8 +97,3 @@ class App(wx.App):
             self.buttons[x][y].SetLabel("🚩")
 
         event.Skip()
-
-
-if __name__ == "__main__":
-    app = App()
-    app.MainLoop()
