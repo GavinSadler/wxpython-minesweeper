@@ -16,7 +16,7 @@ To package an executable of this Minesweeper game, execute the following command
 
 `python -OO -m PyInstaller main.py --onefile --windowed --name Minesweeper`
 
-This will then output an executable of the Minesweeper program. The executable can be found in `dist/Minesweeper.exe`.
+This will then output an executable of the Minesweeper program. The executable can be found in `dist/Minesweeper.exe`
 
 ## Todo
 
