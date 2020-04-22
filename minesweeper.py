@@ -13,8 +13,11 @@ class App(wx.App):
                          pos=(30, 30), size=(800, 600))
         panel = wx.Panel(frame)
 
+        self.width = 20
+        self.height = 20
+
         # Grid sizer which will automatically size all of the buttons in the frame
-        self.grid = wx.GridSizer(10, 10, 3, 3)
+        self.grid = wx.GridSizer(self.width, self.height, 3, 3)
 
         # Empty 2d array to store buttons
         self.buttons = []
@@ -23,16 +26,16 @@ class App(wx.App):
         buttonFont = wx.Font(24, wx.FONTFAMILY_DEFAULT,
                              wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 
-        self.mineField = MineField(10, 10)
+        self.mineField = MineField(self.width, self.height)
         self.firstClick = True
 
-        for x in range(0, 10):
+        for x in range(0, self.width):
             # This will add a new column to the lists buttons, minefield, and gamefield
             self.buttons.append([])
 
-            for y in range(0, 10):
+            for y in range(0, self.height):
                 # This will add a new button to the same list
-                self.buttons[x].append(wx.Button(panel, 10000 + (y * 10 + x)))
+                self.buttons[x].append(wx.Button(panel, 10000 + (y * self.width + x)))
 
                 # This will actually add the new button to the sizer
                 self.grid.Add(self.buttons[x][y], 0, wx.EXPAND)
@@ -46,54 +49,78 @@ class App(wx.App):
 
         frame.Show()
 
+    def recursiveSearch(self, x, y):
+        ''' A wrapper for the recursiveSearch function in MineField which will update all the button labels in this App context '''
+        
+        spacesToUpdate = self.mineField.recursiveSearch(x, y)
+
+        # Update all the buttons which were recusively searched
+        for space in spacesToUpdate:
+
+            nx = space[0]
+            ny = space[1]
+
+            value = self.mineField.getValue(nx, ny)
+
+            self.buttons[nx][ny].SetLabel(str(value) if value > 0 else "")
+            self.buttons[nx][ny].Enable(False)
+
     def onButtonClicked(self, event):
 
-        x = int((event.GetId() - 10000) % 10)
-        y = int((event.GetId() - 10000) / 10)
+        x = int((event.GetId() - 10000) % self.width)
+        y = int((event.GetId() - 10000) / self.height)
 
-        # If there is a flag on the space, we don't want to be able to step on that mine
-        if self.buttons[x][y].GetLabel() != "🚩":
+        print("" + str(x) + "\t" + str(y))
 
-            # We need to randomly spread bombs across the minefield when the user first clicks
-            if self.firstClick:
+        # We need to randomly spread bombs across the minefield when the user first clicks
+        if self.firstClick:
 
-                self.mineField.generateMines(x, y, 30)
+            self.mineField.generateMines(x, y, 30)
+            self.recursiveSearch(x, y)
 
-                # Now that the mines have been placed, we need to make sure they are not generated again
-                self.firstClick = False
+            # Now that the mines have been placed, we need to make sure they are not generated again
+            self.firstClick = False
 
-            # When the user clicks on a mine . . .
-            if self.mineField.get(x, y) == -1:
+        # When the user clicks on a mine . . .
+        elif self.mineField.getValue(x, y) == -3:
 
-                # Grab each position from the mines returned by getMines and set the button labels to be bomb emojis
-                for mine in self.mineField.getMines():
-                    self.buttons[mine[0]][mine[1]].SetLabel("💣")
+            # Grab each mine position returned by getMinePositions and set the button labels to be bomb emojis
+            for mine in self.mineField.getMinePositions():
+                self.buttons[mine[0]][mine[1]].SetLabel("💣")
 
-                wx.MessageBox("Kaboom! You stepped on a mine! Game over!")
+            wx.MessageBox("Kaboom! You stepped on a mine! Game over!")
 
-                # Reset first click to generate new mines
-                self.firstClick = True
+            # Reset all the buttons in the GUI
+            for buttonGroup in self.buttons:
+                for button in buttonGroup:
+                    button.SetLabel("")
+                    button.Enable(True)
 
-                # Reset the mine field
-                self.mineField.reset()
+            # Reset first click to generate new mines
+            self.firstClick = True
 
-            else:
+            # Reset the mine field
+            self.mineField.reset()
 
-                number = self.mineField.get(x, y)
+        # If the space the user clicked on a space which is not a mine (or a special space)
+        elif self.mineField.getValue(x, y) >= 0:
 
-                self.buttons[x][y].SetLabel(str(number) if number > 0 else "")
-                self.buttons[x][y].Enable(False)
+            self.recursiveSearch(x, y)
 
         event.Skip()
 
     def onRightClicked(self, event):
 
-        x = int((event.GetId() - 10000) % 10)
-        y = int((event.GetId() - 10000) / 10)
+        x = int((event.GetId() - 10000) % self.width)
+        y = int((event.GetId() - 10000) / self.height)
 
-        if self.buttons[x][y].GetLabel() == "🚩":
-            self.buttons[x][y].SetLabel("")
-        else:
+        self.mineField.toggleFlag(x, y)
+
+        value = self.mineField.getValue(x, y)
+
+        if value == -2 or value == -1:
             self.buttons[x][y].SetLabel("🚩")
+        else:
+            self.buttons[x][y].SetLabel("")
 
         event.Skip()
