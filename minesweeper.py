@@ -50,7 +50,7 @@ class App(wx.App):
         frame.Show()
 
     def recursiveSearch(self, x, y):
-        ''' A wrapper for the recursiveSearch function in MineField which will update all the button labels in this App context '''
+        """A wrapper for the recursiveSearch function in MineField which will update all the button labels in this App context"""
         
         spacesToUpdate = self.mineField.recursiveSearch(x, y)
 
@@ -60,7 +60,7 @@ class App(wx.App):
             nx = space[0]
             ny = space[1]
 
-            value = self.mineField.getValue(nx, ny)
+            value = self.mineField.touchSpace(nx, ny)
 
             self.buttons[nx][ny].SetLabel(str(value) if value > 0 else "")
             self.buttons[nx][ny].Enable(False)
@@ -70,7 +70,7 @@ class App(wx.App):
         x = int((event.GetId() - 10000) % self.width)
         y = int((event.GetId() - 10000) / self.height)
 
-        print("" + str(x) + "\t" + str(y))
+        #print("" + str(x) + "\t" + str(y))
 
         # We need to randomly spread bombs across the minefield when the user first clicks
         if self.firstClick:
@@ -82,7 +82,7 @@ class App(wx.App):
             self.firstClick = False
 
         # When the user clicks on a mine . . .
-        elif self.mineField.getValue(x, y) == -3:
+        elif self.mineField.touchSpace(x, y) == -3:
 
             # Grab each mine position returned by getMinePositions and set the button labels to be bomb emojis
             for mine in self.mineField.getMinePositions():
@@ -103,7 +103,7 @@ class App(wx.App):
             self.mineField.reset()
 
         # If the space the user clicked on a space which is not a mine (or a special space)
-        elif self.mineField.getValue(x, y) >= 0:
+        elif self.mineField.touchSpace(x, y) >= 0:
 
             self.recursiveSearch(x, y)
 
@@ -116,7 +116,7 @@ class App(wx.App):
 
         self.mineField.toggleFlag(x, y)
 
-        value = self.mineField.getValue(x, y)
+        value = self.mineField.touchSpace(x, y)
 
         if value == -2 or value == -1:
             self.buttons[x][y].SetLabel("🚩")
