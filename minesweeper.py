@@ -26,7 +26,7 @@ class App(wx.App):
         buttonFont = wx.Font(24, wx.FONTFAMILY_DEFAULT,
                              wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 
-        self.mineField = MineField(self.width, self.height)
+        self.mineField = MineField(self.width, self.height, 1)
         self.firstClick = True
 
         for x in range(0, self.width):
@@ -35,7 +35,8 @@ class App(wx.App):
 
             for y in range(0, self.height):
                 # This will add a new button to the same list
-                self.buttons[x].append(wx.Button(panel, 10000 + (y * self.width + x)))
+                self.buttons[x].append(
+                    wx.Button(panel, 10000 + (y * self.width + x)))
 
                 # This will actually add the new button to the sizer
                 self.grid.Add(self.buttons[x][y], 0, wx.EXPAND)
@@ -49,10 +50,10 @@ class App(wx.App):
 
         frame.Show()
 
-    def recursiveSearch(self, x, y):
-        """A wrapper for the recursiveSearch function in MineField which will update all the button labels in this App context"""
-        
-        spacesToUpdate = self.mineField.recursiveSearch(x, y)
+    def touchSpace(self, x, y):
+        """A wrapper for the touchSpace function in MineField which will update all the button labels in this App context"""
+
+        spacesToUpdate = self.mineField.touchSpace(x, y)
 
         # Update all the buttons which were recusively searched
         for space in spacesToUpdate:
@@ -60,7 +61,7 @@ class App(wx.App):
             nx = space[0]
             ny = space[1]
 
-            value = self.mineField.touchSpace(nx, ny)
+            value = self.mineField.uncoverSpace(nx, ny)
 
             self.buttons[nx][ny].SetLabel(str(value) if value > 0 else "")
             self.buttons[nx][ny].Enable(False)
@@ -75,14 +76,14 @@ class App(wx.App):
         # We need to randomly spread bombs across the minefield when the user first clicks
         if self.firstClick:
 
-            self.mineField.generateMines(x, y, 30)
-            self.recursiveSearch(x, y)
+            self.mineField.generateMines(x, y)
+            self.touchSpace(x, y)
 
             # Now that the mines have been placed, we need to make sure they are not generated again
             self.firstClick = False
 
         # When the user clicks on a mine . . .
-        elif self.mineField.touchSpace(x, y) == -3:
+        elif self.mineField.uncoverSpace(x, y) == -3:
 
             # Grab each mine position returned by getMinePositions and set the button labels to be bomb emojis
             for mine in self.mineField.getMinePositions():
@@ -102,10 +103,10 @@ class App(wx.App):
             # Reset the mine field
             self.mineField.reset()
 
-        # If the space the user clicked on a space which is not a mine (or a special space)
-        elif self.mineField.touchSpace(x, y) >= 0:
+        # Every other space can try a recursive search, since it will just end the search at the first space
+        else:
 
-            self.recursiveSearch(x, y)
+            self.touchSpace(x, y)
 
         event.Skip()
 
@@ -116,7 +117,7 @@ class App(wx.App):
 
         self.mineField.toggleFlag(x, y)
 
-        value = self.mineField.touchSpace(x, y)
+        value = self.mineField.uncoverSpace(x, y)
 
         if value == -2 or value == -1:
             self.buttons[x][y].SetLabel("🚩")

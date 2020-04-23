@@ -15,21 +15,24 @@ class MineField():
     Each space on the minefield is initially an empty untouched space denoted by -4.
     """
 
-
-    def __init__(self, width, height):
+    def __init__(self, width, height, mineCount):
 
         self.width = width
         self.height = height
+
+        self.totalSpaces = width * height
+
+        self.flagsUsed = 0
+        self.mineCount = mineCount
 
         self.mineField = []
 
         self.reset()  # Initializes the empty 2d array self.mineField
 
-
-    def generateMines(self, x, y, mineCount):
+    def generateMines(self, x, y):
         """Generates mines on the mineField, avoiding a 3 by 3 area around the position (x, y)"""
 
-        mines = mineCount
+        mines = self.mineCount
 
         while mines:
             rx = random.randint(0, self.width - 1)
@@ -43,15 +46,14 @@ class MineField():
 
                 mines = mines - 1
 
-
-    def touchSpace(self, x, y):
+    def uncoverSpace(self, x, y):
         """
-        Gets the value on the space of the mineField at position (x, y). 
-        If the space is still a hidden space (with a value of -4) it will be unconvered and assigned the number of surrounding mines. 
-        Otherwise, the space's value will simply be returned.
+        Reveals a space given is position.
+        If the space is an untouched, then it will be assigned it's proper value based on the mines around it.
+        Otherwise, if the space is a special space or has already been uncovered, it will return it's existing value.
         """
 
-        # Check to see if this space has been uncovered yet or if it's a special space, since we wouldn't have to do calculations
+        # If we're not dealing with an untouched space, then just return what already exists
         if self.mineField[x][y] != -4:
             return self.mineField[x][y]
 
@@ -78,16 +80,15 @@ class MineField():
 
         return mineCount
 
-
-    def recursiveSearch(self, x, y):
+    def touchSpace(self, x, y):
         """
         Recusively searches the minefield starting at a given position (x, y), which must be an untouched space with 0 mines surrounding it. 
         For every space which is a 0 mines untouched space, it then recusively searches that space with this same function. 
         This method should clear out spaces which are obviously not mines. 
         Returns a list of tuples of the positions of all of the recursively cleared spaces.
         """
-    
-        firstSpaceValue = self.touchSpace(x, y)
+
+        firstSpaceValue = self.uncoverSpace(x, y)
 
         # If the given space is not a space with no surrounding mines (There is a number on the space),
         # then we just return the one position of the space. This allows us to use this function whenever
@@ -115,7 +116,7 @@ class MineField():
 
                         # If the space has not been uncovered and has no surrounding mines, then we can just clear its adjacent spaces as well
                         # This is where recursion takes place, since we are doing the same process
-                        if (self.mineField[nx][ny] == -4 or self.mineField[nx][ny] == -2) and self.touchSpace(nx, ny) == 0:
+                        if (self.mineField[nx][ny] == -4 or self.mineField[nx][ny] == -2) and self.uncoverSpace(nx, ny) == 0:
                             search(nx, ny)
 
         search(x, y)
@@ -123,27 +124,27 @@ class MineField():
         # When all is said and done, we now have an array with every mine we touched so the front end can update its new state
         return touchedSpaces
 
-
     def toggleFlag(self, x, y):
         """
-        Toggles a flag on a given location on the minefield.
-        If a flag cannot be toggled (Its an uncovered space >= 0), nothing will change
+        Toggles a flag on a given location on the minefield. 
+        If a flag cannot be toggled (Its an uncovered space >= 0), nothing will change.
         """
 
         spaceValue = self.mineField[x][y]
 
         # Flags must be placed untouched spaces or bombs
         if spaceValue == -4 or spaceValue == -3:
-            
+
             # Flag spaces are 2 values more from their corresponding spaces, so add 2
             self.mineField[x][y] = self.mineField[x][y] + 2
+            self.flagsUsed = self.flagsUsed + 1
 
         # If there is already a flag on those spaces . . .
         elif spaceValue == -2 or spaceValue == -1:
 
             # Nonflag spaces are 2 more than flag space, so subtract 2
             self.mineField[x][y] = self.mineField[x][y] - 2
-
+            self.flagsUsed = self.flagsUsed - 1
 
     def getMinePositions(self):
         """Returns a list of tuples of the positions of all the mines on the map, used to display where mines were at the end of a game."""
@@ -158,7 +159,6 @@ class MineField():
                     output.append((x, y))
 
         return output
-
 
     def reset(self):
         """Resets the mineField to have all empty spaces"""
