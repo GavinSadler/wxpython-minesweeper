@@ -1,5 +1,5 @@
-from minesweeper import App
+from minesweeperApp import MinesweeperApp
 
 if __name__ == "__main__":
-    app = App()
+    app = MinesweeperApp()
     app.MainLoop()

@@ -1,127 +1,176 @@
 
-import wx
-from minefield import MineField
+import random
 
 
-class App(wx.App):
+class Minesweeper():
+    """
+    A class representing a 2d array mineField with a width given by the width parameter and a height given by the hight parameter.
+    Each space in the minefield can take on any of the following values:
+         -4 : untouched space
+         -3 : bomb
+         -2 : flag on untouched space
+         -1 : flag on bomb
+          0 : clear space (0 surrounding mines)
+        1-8 : indicates the number of surrounding mines
+    Each space on the minefield is initially an empty untouched space denoted by -4.
+    """
 
-    def __init__(self):
+    def __init__(self, width, height, mineCount):
 
-        super().__init__()
+        self.width = width
+        self.height = height
 
-        frame = wx.Frame(None, title="Minesweeper",
-                         pos=(30, 30), size=(800, 600))
-        panel = wx.Panel(frame)
+        self.totalSpaces = width * height
 
-        self.width = 20
-        self.height = 20
+        self.flagsUsed = 0
+        self.mineCount = mineCount
 
-        # Grid sizer which will automatically size all of the buttons in the frame
-        self.grid = wx.GridSizer(self.width, self.height, 3, 3)
+        self.mineField = []
 
-        # Empty 2d array to store buttons
-        self.buttons = []
+        self.reset()  # Initializes the empty 2d array self.mineField
 
-        # The font instance which will be used for the button labels
-        buttonFont = wx.Font(24, wx.FONTFAMILY_DEFAULT,
-                             wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+    def generateMines(self, x, y):
+        """Generates mines on the mineField, avoiding a 3 by 3 area around the position (x, y)"""
 
-        self.mineField = MineField(self.width, self.height, 1)
-        self.firstClick = True
+        mines = self.mineCount
 
-        for x in range(0, self.width):
-            # This will add a new column to the lists buttons, minefield, and gamefield
-            self.buttons.append([])
+        while mines:
+            rx = random.randint(0, self.width - 1)
+            ry = random.randint(0, self.height - 1)
 
-            for y in range(0, self.height):
-                # This will add a new button to the same list
-                self.buttons[x].append(
-                    wx.Button(panel, 10000 + (y * self.width + x)))
+            # Make sure there is no mine at the randomly selected location and that the mine is placed outside of the 3x3 location surrounding the first touch's location
+            if self.mineField[rx][ry] == -4 and (rx > x + 1 or rx < x - 1) and (ry > y + 1 or ry < y - 1):
 
-                # This will actually add the new button to the sizer
-                self.grid.Add(self.buttons[x][y], 0, wx.EXPAND)
+                # A value of -1 indicated a mine at this location
+                self.mineField[rx][ry] = -3
 
-                # This will bind our button to a function and give it a font
-                self.buttons[x][y].Bind(wx.EVT_BUTTON, self.onButtonClicked)
-                self.buttons[x][y].Bind(wx.EVT_RIGHT_UP, self.onRightClicked)
-                self.buttons[x][y].SetFont(buttonFont)
+                mines = mines - 1
 
-        panel.SetSizer(self.grid)
+    def uncoverSpace(self, x, y):
+        """
+        Reveals a space given is position.
+        If the space is an untouched, then it will be assigned it's proper value based on the mines around it.
+        Otherwise, if the space is a special space or has already been uncovered, it will return it's existing value.
+        """
 
-        frame.Show()
+        # If we're not dealing with an untouched space, then just return what already exists
+        if self.mineField[x][y] != -4:
+            return self.mineField[x][y]
+
+        # Otherwise, we need to count how many mines surround the space
+        mineCount = 0
+
+        # These for loops in conjunction will check the 3 by 3 area surrounding the space
+        for a in range(-1, 2):
+            for b in range(-1, 2):
+
+                # Translate our starting position to get to the next adjacent position
+                nx = x + a
+                ny = y + b
+
+                # Make sure that the spaces being checked are not outside the bounds of the mineField array
+                if nx >= 0 and nx < self.width and ny >= 0 and ny < self.height:
+
+                    # Increase minecount if the given position is a mine
+                    if self.mineField[nx][ny] == -3 or self.mineField[nx][ny] == -1:
+                        mineCount = mineCount + 1
+
+        # We want to add the new uncovered value to the minefield
+        self.mineField[x][y] = mineCount
+
+        return mineCount
 
     def touchSpace(self, x, y):
-        """A wrapper for the touchSpace function in MineField which will update all the button labels in this App context"""
+        """
+        Recusively searches the minefield starting at a given position (x, y), which must be an untouched space with 0 mines surrounding it. 
+        For every space which is a 0 mines untouched space, it then recusively searches that space with this same function. 
+        This method should clear out spaces which are obviously not mines. 
+        Returns a list of tuples of the positions of all of the recursively cleared spaces.
+        """
 
-        spacesToUpdate = self.mineField.touchSpace(x, y)
+        firstSpaceValue = self.uncoverSpace(x, y)
 
-        # Update all the buttons which were recusively searched
-        for space in spacesToUpdate:
+        # If the given space is not a space with no surrounding mines (There is a number on the space),
+        # then we just return the one position of the space. This allows us to use this function whenever
+        # we need to check a space
+        if firstSpaceValue != 0:
+            return [(x, y)]
 
-            nx = space[0]
-            ny = space[1]
+        touchedSpaces = []
 
-            value = self.mineField.uncoverSpace(nx, ny)
+        # This part of the code is isolated into its own function since it needs to be recursively called
+        def search(x, y):
 
-            self.buttons[nx][ny].SetLabel(str(value) if value > 0 else "")
-            self.buttons[nx][ny].Enable(False)
+            # These for loops in conjunction will check the 3 by 3 area surrounding the space
+            for a in range(-1, 2):
+                for b in range(-1, 2):
 
-    def onButtonClicked(self, event):
+                    # Translate our starting position to get to the next adjacent position
+                    nx = x + a
+                    ny = y + b
 
-        x = int((event.GetId() - 10000) % self.width)
-        y = int((event.GetId() - 10000) / self.height)
+                    # Make sure that the spaces being checked are not outside the bounds of the mineField array
+                    if nx >= 0 and nx < self.width and ny >= 0 and ny < self.height:
 
-        #print("" + str(x) + "\t" + str(y))
+                        touchedSpaces.append((nx, ny))
 
-        # We need to randomly spread bombs across the minefield when the user first clicks
-        if self.firstClick:
+                        # If the space has not been uncovered and has no surrounding mines, then we can just clear its adjacent spaces as well
+                        # This is where recursion takes place, since we are doing the same process
+                        if (self.mineField[nx][ny] == -4 or self.mineField[nx][ny] == -2) and self.uncoverSpace(nx, ny) == 0:
+                            search(nx, ny)
 
-            self.mineField.generateMines(x, y)
-            self.touchSpace(x, y)
+        search(x, y)
 
-            # Now that the mines have been placed, we need to make sure they are not generated again
-            self.firstClick = False
+        # When all is said and done, we now have an array with every mine we touched so the front end can update its new state
+        return touchedSpaces
 
-        # When the user clicks on a mine . . .
-        elif self.mineField.uncoverSpace(x, y) == -3:
+    def toggleFlag(self, x, y):
+        """
+        Toggles a flag on a given location on the minefield. 
+        If a flag cannot be toggled (Its an uncovered space >= 0), nothing will change.
+        """
 
-            # Grab each mine position returned by getMinePositions and set the button labels to be bomb emojis
-            for mine in self.mineField.getMinePositions():
-                self.buttons[mine[0]][mine[1]].SetLabel("💣")
+        spaceValue = self.mineField[x][y]
 
-            wx.MessageBox("Kaboom! You stepped on a mine! Game over!")
+        # Flags must be placed untouched spaces or bombs
+        if spaceValue == -4 or spaceValue == -3:
 
-            # Reset all the buttons in the GUI
-            for buttonGroup in self.buttons:
-                for button in buttonGroup:
-                    button.SetLabel("")
-                    button.Enable(True)
+            # Flag spaces are 2 values more from their corresponding spaces, so add 2
+            self.mineField[x][y] = self.mineField[x][y] + 2
+            self.flagsUsed = self.flagsUsed + 1
 
-            # Reset first click to generate new mines
-            self.firstClick = True
+        # If there is already a flag on those spaces . . .
+        elif spaceValue == -2 or spaceValue == -1:
 
-            # Reset the mine field
-            self.mineField.reset()
+            # Nonflag spaces are 2 more than flag space, so subtract 2
+            self.mineField[x][y] = self.mineField[x][y] - 2
+            self.flagsUsed = self.flagsUsed - 1
 
-        # Every other space can try a recursive search, since it will just end the search at the first space
-        else:
+    def getMinePositions(self):
+        """Returns a list of tuples of the positions of all the mines on the map, used to display where mines were at the end of a game."""
 
-            self.touchSpace(x, y)
+        output = []
 
-        event.Skip()
+        for x in range(0, self.width):
+            for y in range(0, self.height):
 
-    def onRightClicked(self, event):
+                # Add the position to the tuple if the space is a mine
+                if self.mineField[x][y] == -3:
+                    output.append((x, y))
 
-        x = int((event.GetId() - 10000) % self.width)
-        y = int((event.GetId() - 10000) / self.height)
+        return output
 
-        self.mineField.toggleFlag(x, y)
+    def reset(self):
+        """Resets the mineField to have all empty spaces"""
 
-        value = self.mineField.uncoverSpace(x, y)
+        self.mineField = []
 
-        if value == -2 or value == -1:
-            self.buttons[x][y].SetLabel("🚩")
-        else:
-            self.buttons[x][y].SetLabel("")
+        for x in range(0, self.width):
 
-        event.Skip()
+            # Add a new row to the mineField array
+            self.mineField.append([])
+
+            for y in range(0, self.height):
+
+                # Fill the mineField with empty spaces
+                self.mineField[x].append(-4)
