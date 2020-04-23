@@ -40,8 +40,9 @@ class Minesweeper():
             rx = random.randint(0, self.width - 1)
             ry = random.randint(0, self.height - 1)
 
-            # Make sure there is no mine at the randomly selected location and that the mine is placed outside of the 3x3 location surrounding the first touch's location
-            if self.mineField[rx][ry] == -4 and (rx > x + 1 or rx < x - 1) and (ry > y + 1 or ry < y - 1):
+            # Make sure there is no mine at the randomly selected location
+            # and that the mine is placed outside of the 3x3 location surrounding the first touch's location
+            if self.mineField[rx][ry] == -4 and ((rx > x + 1 or rx < x - 1) or (ry > y + 1 or ry < y - 1)):
 
                 # A value of -1 indicated a mine at this location
                 self.mineField[rx][ry] = -3
