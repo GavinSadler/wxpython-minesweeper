@@ -25,6 +25,8 @@ class Minesweeper():
         self.flagsUsed = 0
         self.mineCount = mineCount
 
+        self.firstTouch = True
+
         self.mineField = []
 
         self.reset()  # Initializes the empty 2d array self.mineField
@@ -87,6 +89,11 @@ class Minesweeper():
         This method should clear out spaces which are obviously not mines. 
         Returns a list of tuples of the positions of all of the recursively cleared spaces.
         """
+
+        # Make sure if this is the first touch that we don't generate mines near the first touched space
+        if self.firstTouch:
+            self.generateMines(x, y)
+            self.firstTouch = False
 
         firstSpaceValue = self.uncoverSpace(x, y)
 
@@ -164,6 +171,7 @@ class Minesweeper():
         """Resets the mineField to have all empty spaces"""
 
         self.mineField = []
+        self.firstTouch = True
 
         for x in range(0, self.width):
 
