@@ -85,10 +85,14 @@ class Minesweeper():
     def touchSpace(self, x, y):
         """
         Recusively searches the minefield starting at a given position (x, y), which must be an untouched space with 0 mines surrounding it. 
-        For every space which is a 0 mines untouched space, it then recusively searches that space with this same function. 
+        For every space which is a 0 mines untouched space or flagged space, it then recusively searches that space with this same function. 
         This method should clear out spaces which are obviously not mines. 
         Returns a list of tuples of the positions of all of the recursively cleared spaces.
         """
+
+        # If the space touched is a flag, then do nothing
+        if self.mineField[x][y] == -2 or self.mineField[x][y] == -1:
+            return []
 
         # Make sure if this is the first touch that we don't generate mines near the first touched space
         if self.firstTouch:
@@ -135,7 +139,11 @@ class Minesweeper():
         """
         Toggles a flag on a given location on the minefield. 
         If a flag cannot be toggled (Its an uncovered space >= 0), nothing will change.
+        Flags cannot be placed until after the first touch
         """
+
+        if self.firstTouch:
+            return
 
         spaceValue = self.mineField[x][y]
 
