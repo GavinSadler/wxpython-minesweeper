@@ -2,7 +2,7 @@
 import wx
 
 
-class SettingsFrame(wx.Panel):
+class SettingsPanel(wx.Panel):
     """
     A class representing the settings menu where the player can edit settings for the game
     """
