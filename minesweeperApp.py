@@ -21,6 +21,7 @@ class MinesweeperApp(wx.App):
         minesweeper = Minesweeper(width, height, 15)
 
         gameInfo = GameInfoPanel(frame, minesweeper)
+        gameInfo.updateLabel()
         verticalContainer.Add(gameInfo, proportion=0, flag=wx.EXPAND)
 
         mineField = MinefieldPanel(frame, minesweeper)
