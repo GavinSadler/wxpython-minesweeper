@@ -29,7 +29,14 @@ class Minesweeper():
 
         self.mineField = []
 
-        self.reset()  # Initializes the empty 2d array self.mineField
+        # A storage place for all of the callback functions
+        self.onFirstSpaceTouchedFunctions = []
+        self.onFlagPlacedFunctions = []
+        self.onGameOverFunctions = []
+        self.onGameResetFunctions = []
+
+        # Initializes the empty 2d array self.mineField
+        self.reset()
 
     def generateMines(self, x, y):
         """Generates mines on the mineField, avoiding a 3 by 3 area around the position (x, y)"""
@@ -95,9 +102,14 @@ class Minesweeper():
         if self.mineField[x][y] == -2 or self.mineField[x][y] == -1:
             return []
 
+        # Execute the gameover callback if the touched space is a mine
+        if self.mineField[x][y] == -3:
+            self._execute(self.onGameOverFunctions)
+
         # Make sure if this is the first touch that we don't generate mines near the first touched space
         if self.firstTouch:
             self.generateMines(x, y)
+            self._execute(self.onFirstSpaceTouchedFunctions)
             self.firstTouch = False
 
         firstSpaceValue = self.uncoverSpace(x, y)
@@ -162,6 +174,8 @@ class Minesweeper():
             self.mineField[x][y] = self.mineField[x][y] - 2
             self.flagsUsed = self.flagsUsed - 1
 
+        self._execute(self.onFlagPlacedFunctions)
+
     def getMinePositions(self):
         """Returns a list of tuples of the positions of all the mines on the map, used to display where mines were at the end of a game."""
 
@@ -191,3 +205,26 @@ class Minesweeper():
 
                 # Fill the mineField with empty spaces
                 self.mineField[x].append(-4)
+
+        self._execute(self.onGameResetFunctions)
+
+    def onFirstSpaceTouched(self, function):
+        """Callback function, runs the given function when the first space is touched."""
+        self.onFirstSpaceTouchedFunctions.append(function)
+
+    def onFlagPlaced(self, function):
+        """Callback function, runs the given function when a flag is placed."""
+        self.onFlagPlacedFunctions.append(function)
+
+    def onGameOver(self, function):
+        """Callback function, runs when the user clicks on a mine."""
+        self.onGameOverFunctions.append(function)
+
+    def onGameReset(self, function):
+        """Callback function, runs when the game is reset."""
+        self.onGameResetFunctions.append(function)
+
+    def _execute(self, functionList):
+        """Used internally for callback functions, and will run the entirety of a list of functions"""
+        for function in functionList:
+            function()
