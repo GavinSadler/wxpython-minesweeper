@@ -17,7 +17,7 @@ class MinefieldPanel(wx.Panel):
         self.height = self.mineField.height
 
         # Grid sizer which will automatically size all of the buttons in the frame
-        self.grid = wx.GridSizer(self.width, self.height, 3, 3)
+        self.grid = wx.GridSizer(self.width, self.height, 0, 0)
 
         # Empty 2d array to store buttons
         self.buttons = []

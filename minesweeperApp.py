@@ -2,6 +2,7 @@
 import wx
 from minesweeper import Minesweeper
 from minefieldPanel import MinefieldPanel
+from gameInfoPanel import GameInfoPanel
 
 
 class MinesweeperApp(wx.App):
@@ -9,14 +10,22 @@ class MinesweeperApp(wx.App):
     def __init__(self):
         super().__init__()
 
-        self.frame = wx.Frame(None, title="Minesweeper",
-                              pos=(30, 30), size=(800, 600))
+        frame = wx.Frame(None, title="Minesweeper",
+                         pos=(30, 30), size=(800, 600))
 
-        self.width = 15
-        self.height = 15
+        width = 10
+        height = 10
 
-        self.minesweeper = Minesweeper(self.width, self.height, 15)
+        verticalContainer = wx.BoxSizer(wx.VERTICAL)
 
-        self.mineField = MinefieldPanel(self.frame, self.minesweeper)
+        minesweeper = Minesweeper(width, height, 15)
 
-        self.frame.Show()
+        gameInfo = GameInfoPanel(frame, minesweeper)
+        verticalContainer.Add(gameInfo, proportion=0, flag=wx.EXPAND)
+
+        mineField = MinefieldPanel(frame, minesweeper)
+        verticalContainer.Add(mineField, proportion=1, flag=wx.EXPAND)
+
+        frame.SetSizer(verticalContainer)
+
+        frame.Show()
