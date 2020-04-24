@@ -206,6 +206,8 @@ class Minesweeper():
                 # Fill the mineField with empty spaces
                 self.mineField[x].append(-4)
 
+        self.flagsUsed = 0
+
         self._execute(self.onGameResetFunctions)
 
     def onFirstSpaceTouched(self, function):
