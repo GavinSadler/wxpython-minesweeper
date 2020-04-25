@@ -3,6 +3,7 @@ import wx
 from minesweeper import Minesweeper
 from minefieldPanel import MinefieldPanel
 from gameInfoPanel import GameInfoPanel
+from settingsDialog import SettingsDialog
 
 
 class MinesweeperApp(wx.App):
@@ -50,6 +51,9 @@ class MinesweeperApp(wx.App):
 
         frame.SetSizer(verticalContainer)
 
+        # Make sure application actually closes when user exits
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
+
         frame.Show()
 
     def menuHandler(self, event):
@@ -57,4 +61,4 @@ class MinesweeperApp(wx.App):
         if event.GetId() == self.resetButtonId:
             self.minesweeper.reset()
         elif event.GetId() == self.settingsMenuId:
-            pass
+            SettingsDialog()
