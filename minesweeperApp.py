@@ -13,20 +13,48 @@ class MinesweeperApp(wx.App):
         frame = wx.Frame(None, title="Minesweeper",
                          pos=(30, 30), size=(800, 600))
 
-        width = 10
-        height = 10
+        gameWidth = 10
+        gameHeight = 10
+        numMines = 15
 
+        self.resetButtonId = 100
+        self.settingsMenuId = 200
+
+        # Menu bar definitions
+        menuBar = wx.MenuBar()
+
+        menu = wx.Menu()
+
+        resetGame = wx.MenuItem(menu, self.resetButtonId, "Reset")
+        menu.Append(resetGame)
+
+        openOptions = wx.MenuItem(menu, self.settingsMenuId, "Options")
+        menu.Append(openOptions)
+
+        menuBar.Append(menu, "Game")
+
+        frame.SetMenuBar(menuBar)
+        frame.Bind(wx.EVT_MENU, self.menuHandler)
+
+        # Start of program body definitions
         verticalContainer = wx.BoxSizer(wx.VERTICAL)
 
-        minesweeper = Minesweeper(width, height, 15)
+        self.minesweeper = Minesweeper(gameWidth, gameHeight, numMines)
 
-        gameInfo = GameInfoPanel(frame, minesweeper)
-        gameInfo.updateLabel()
+        gameInfo = GameInfoPanel(frame, self.minesweeper)
+        gameInfo.updateLabel()  # Make sure the label is updated when the game starts
         verticalContainer.Add(gameInfo, proportion=0, flag=wx.EXPAND)
 
-        mineField = MinefieldPanel(frame, minesweeper)
+        mineField = MinefieldPanel(frame, self.minesweeper)
         verticalContainer.Add(mineField, proportion=1, flag=wx.EXPAND)
 
         frame.SetSizer(verticalContainer)
 
         frame.Show()
+
+    def menuHandler(self, event):
+
+        if event.GetId() == self.resetButtonId:
+            self.minesweeper.reset()
+        elif event.GetId() == self.settingsMenuId:
+            pass

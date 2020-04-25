@@ -43,6 +43,9 @@ class MinefieldPanel(wx.Panel):
                 self.buttons[x][y].Bind(wx.EVT_RIGHT_UP, self.onRightClicked)
                 self.buttons[x][y].SetFont(buttonFont)
 
+        # Bind the minesweeper game instance callback to reset the board if the game is reset
+        self.mineField.onGameReset(self.reset)
+
         self.SetSizer(self.grid)
 
     def touchSpace(self, x, y):
@@ -70,7 +73,7 @@ class MinefieldPanel(wx.Panel):
         y = int((event.GetId() - 10000) / self.height)
 
         # Previously used to debug what space on the minefield that was touched
-        #print(str(x) + "\t" + str(y))
+        # print(str(x) + "\t" + str(y))
 
         # When the user clicks on a mine . . .
         if self.mineField.uncoverSpace(x, y) == -3:
@@ -81,13 +84,7 @@ class MinefieldPanel(wx.Panel):
 
             wx.MessageBox("Kaboom! You stepped on a mine! Game over!")
 
-            # Reset all the buttons in the GUI
-            for buttonGroup in self.buttons:
-                for button in buttonGroup:
-                    button.SetLabel("")
-                    button.Enable(True)
-
-            # Reset the mine field
+            # Reset the button states and the game state
             self.mineField.reset()
 
         # Every other space can try a recursive search, since it will just end the search at the first space
@@ -112,3 +109,12 @@ class MinefieldPanel(wx.Panel):
             self.buttons[x][y].SetLabel("")
 
         event.Skip()
+
+    def reset(self):
+        """Resets all of the buttons on the grid to be in their default unpressed state with no labels"""
+
+        # Reset all the buttons in the GUI
+        for buttonGroup in self.buttons:
+            for button in buttonGroup:
+                button.SetLabel("")
+                button.Enable(True)
