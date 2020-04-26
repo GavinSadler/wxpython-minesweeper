@@ -12,6 +12,19 @@ class SettingsDialog(wx.Dialog):
         super().__init__(None, title="Game options",
                          style=wx.STAY_ON_TOP | wx.DEFAULT_DIALOG_STYLE, size=wx.Size(200, 400))
 
+        # -- Class Fields --
+
+        self.difficulty = 1  # 0 = East, 1 = Normal, 2 = Hard, 3 = Custom
+        self.timerMode = 0  # 0 = Stopwatch, 1 = countdown
+
+        # These are the settings used for easy, medium, hard selection
+        # Tuple is ordered (width, height, mine count)
+        self.easySettings = (10, 10, 10)
+        self.normalSettings = (15, 15, 20)
+        self.hardSettings = (25, 25, 35)
+
+        # -- GUI Initialization Code --
+
         bSizer4 = wx.BoxSizer(wx.VERTICAL)
 
         bSizer7 = wx.BoxSizer(wx.HORIZONTAL)
@@ -25,13 +38,13 @@ class SettingsDialog(wx.Dialog):
 
         gSizer1 = wx.GridSizer(3, 2, 5, 0)
 
-        self.m_staticText3 = wx.StaticText(
+        self.widthLabel = wx.StaticText(
             self, wx.ID_ANY, u"Width", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.m_staticText3.Wrap(-1)
+        self.widthLabel.Wrap(-1)
 
-        self.m_staticText3.Enable(False)
+        self.widthLabel.Enable(False)
 
-        gSizer1.Add(self.m_staticText3, 0, wx.ALL |
+        gSizer1.Add(self.widthLabel, 0, wx.ALL |
                     wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.width = wx.SpinCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size(
@@ -40,13 +53,13 @@ class SettingsDialog(wx.Dialog):
 
         gSizer1.Add(self.width, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.m_staticText31 = wx.StaticText(
+        self.heightLabel = wx.StaticText(
             self, wx.ID_ANY, u"Height", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.m_staticText31.Wrap(-1)
+        self.heightLabel.Wrap(-1)
 
-        self.m_staticText31.Enable(False)
+        self.heightLabel.Enable(False)
 
-        gSizer1.Add(self.m_staticText31, 0, wx.ALL |
+        gSizer1.Add(self.heightLabel, 0, wx.ALL |
                     wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.height = wx.SpinCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size(
@@ -55,28 +68,28 @@ class SettingsDialog(wx.Dialog):
 
         gSizer1.Add(self.height, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.m_staticText32 = wx.StaticText(
+        self.minesLabel = wx.StaticText(
             self, wx.ID_ANY, u"Mines", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.m_staticText32.Wrap(-1)
+        self.minesLabel.Wrap(-1)
 
-        self.m_staticText32.Enable(False)
+        self.minesLabel.Enable(False)
 
-        gSizer1.Add(self.m_staticText32, 0, wx.ALL |
+        gSizer1.Add(self.minesLabel, 0, wx.ALL |
                     wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.bombs = wx.SpinCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size(
+        self.mines = wx.SpinCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size(
             80, -1), wx.SP_ARROW_KEYS, 0, 100, 20)
-        self.bombs.Enable(False)
+        self.mines.Enable(False)
 
-        gSizer1.Add(self.bombs, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 0)
+        gSizer1.Add(self.mines, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 0)
 
         bSizer7.Add(gSizer1, 1, wx.ALIGN_CENTER_VERTICAL, 5)
 
         bSizer4.Add(bSizer7, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND, 5)
 
-        self.m_staticline1 = wx.StaticLine(
+        m_staticline1 = wx.StaticLine(
             self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL)
-        bSizer4.Add(self.m_staticline1, 0, wx.ALL |
+        bSizer4.Add(m_staticline1, 0, wx.ALL |
                     wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND, 5)
 
         bSizer11 = wx.BoxSizer(wx.HORIZONTAL)
@@ -90,13 +103,13 @@ class SettingsDialog(wx.Dialog):
 
         bSizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.m_staticText4 = wx.StaticText(
+        self.timeLimitLabel = wx.StaticText(
             self, wx.ID_ANY, u"Time Limit", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.m_staticText4.Wrap(-1)
+        self.timeLimitLabel.Wrap(-1)
 
-        self.m_staticText4.Enable(False)
+        self.timeLimitLabel.Enable(False)
 
-        bSizer3.Add(self.m_staticText4, 0, wx.ALL |
+        bSizer3.Add(self.timeLimitLabel, 0, wx.ALL |
                     wx.ALIGN_CENTER_VERTICAL, 5)
 
         self.timeLimit = wx.SpinCtrlDouble(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size(
@@ -111,13 +124,49 @@ class SettingsDialog(wx.Dialog):
 
         bSizer4.Add(bSizer11, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND, 5)
 
-        self.m_staticline11 = wx.StaticLine(
+        m_staticline11 = wx.StaticLine(
             self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL)
-        bSizer4.Add(self.m_staticline11, 0, wx.EXPAND | wx.ALL, 5)
+        bSizer4.Add(m_staticline11, 0, wx.EXPAND | wx.ALL, 5)
 
         self.submitButton = wx.Button(
             self, wx.ID_ANY, u"Done", wx.DefaultPosition, wx.DefaultSize, 0)
         bSizer4.Add(self.submitButton, 0, wx.ALL | wx.ALIGN_RIGHT, 5)
+
         self.SetSizerAndFit(bSizer4)
 
+        # -- Event bindings --
+
+        self.difficultyMode.Bind(wx.EVT_RADIOBOX, self.onDifficultyChange)
+        self.timerMode.Bind(wx.EVT_RADIOBOX, self.onTimerModeChange)
+        self.submitButton.Bind(wx.EVT_BUTTON, self.onSubmit)
+
         self.ShowModal()
+
+    def onDifficultyChange(self, event):
+        # If custom mode is chosen, give the user access to the custom settings
+        if event.GetEventObject().GetSelection() == 3:
+            self.width.Enable()
+            self.widthLabel.Enable()
+            self.height.Enable()
+            self.heightLabel.Enable()
+            self.mines.Enable()
+            self.minesLabel.Enable()
+        else:
+            self.width.Disable()
+            self.widthLabel.Disable()
+            self.height.Disable()
+            self.heightLabel.Disable()
+            self.mines.Disable()
+            self.minesLabel.Disable()
+
+    def onTimerModeChange(self, event):
+        # If countdown mode is selected, allow the user to change the countdown time
+        if event.GetEventObject().GetSelection() == 1:
+            self.timeLimitLabel.Enable()
+            self.timeLimit.Enable()
+        else:
+            self.timeLimitLabel.Disable()
+            self.timeLimit.Disable()
+
+    def onSubmit(self, event):
+        pass
